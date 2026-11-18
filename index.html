@@ -1,1 +1,168 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-Jar 2.0</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,#fff1f6,#f1eaff,#fffaf0);font-family:Arial,sans-serif;color:#604d60}
+header{text-align:center;padding:35px 15px}
+header h1{font-family:Georgia,serif;color:#bd7899;font-size:38px;margin:10px}
+header p{font-size:13px;letter-spacing:2px;color:#987c91}
+main{max-width:650px;margin:auto;padding:12px}
+.card{background:#ffffffdd;border:1px solid #f1dfeb;border-radius:22px;padding:22px;margin-bottom:18px;box-shadow:0 5px 20px #a98aa51a}
+h2{color:#b47798;font-family:Georgia,serif}
+.jar{width:180px;height:200px;margin:20px auto;border:5px solid #d9bddd;border-top:0;border-radius:20px 20px 45px 45px;background:#f9edfa;display:flex;align-items:end;justify-content:center;flex-wrap:wrap;gap:5px;padding:12px;overflow:hidden}
+.jar span{font-size:25px}
+.emotions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.emotion{border:2px solid transparent;border-radius:15px;background:#fff0f6;padding:12px 4px;color:#654f62;font-size:14px}
+.emotion span{display:block;font-size:26px;margin-bottom:5px}
+.emotion.selected{border-color:#bc789a;background:#f8dce9}
+textarea,select{width:100%;padding:13px;border:1px solid #ead8e5;border-radius:12px;background:#fffdfd;font-size:15px}
+label{display:block;margin:16px 0 8px;font-weight:bold}
+.primary{width:100%;padding:14px;border:0;border-radius:13px;background:#bd7899;color:white;font-size:16px;margin-top:15px}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#fff0f6;border-radius:13px;text-align:center;padding:13px 5px}
+.stat strong{display:block;font-size:23px;color:#ad6e90}
+.stat small{font-size:11px}
+.entry{border-bottom:1px solid #f0e5ed;padding:12px 0;overflow-wrap:anywhere}
+.entry small{color:#987c91}
+.secondary{padding:10px;border:1px solid #e4c9dc;border-radius:10px;background:#fff5fa;color:#90627e;margin:5px 3px}
+.note{font-size:12px;line-height:1.6;color:#998697}
+footer{text-align:center;padding:25px;color:#a58c9b;font-size:12px}
+@media(max-width:370px){.emotions{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<div style="font-size:45px">🫙</div>
+<h1>E-Jar 2.0</h1>
+<p>MY LITTLE SPACE FOR EMOTIONS</p>
+<p>A little space where every emotion matters. Express your feelings, embrace your emotions and understand yourself, one feeling at a time.</p>
+</header>
+<main>
+<section class="card" style="text-align:center">
+<h2>My Little Emotion Jar</h2>
+<div class="jar" id="jar"></div>
+<p id="jarCount">Your jar is waiting for its first feeling ♡</p>
+</section>
+<section class="card">
+<h2>How are you feeling today?</h2>
+<div class="emotions" id="emotions">
+<button class="emotion" data-e="Happy">😊<span>Happy</span></button>
+<button class="emotion" data-e="Sad">😢<span>Sad</span></button>
+<button class="emotion" data-e="Angry">😠<span>Angry</span></button>
+<button class="emotion" data-e="Worried">😟<span>Worried</span></button>
+<button class="emotion" data-e="Calm">😌<span>Calm</span></button>
+</div>
+<label for="intensity">Intensity of emotion</label>
+<select id="intensity">
+<option value="1">1 - A little</option>
+<option value="2">2 - Mild</option>
+<option value="3" selected>3 - Moderate</option>
+<option value="4">4 - Strong</option>
+<option value="5">5 - Very strong</option>
+</select>
+<label for="reflection">Write your feelings</label>
+<textarea id="reflection" rows="4" maxlength="1000" placeholder="Write whatever is on your mind..."></textarea>
+<button class="primary" id="add">Add to my jar ♡</button>
+<p class="note">Every feeling has a place here. You may leave your reflection blank.</p>
+</section>
+<section class="card">
+<h2>My Emotion Overview</h2>
+<div class="statgrid">
+<div class="stat"><strong id="total">0</strong><small>Total entries</small></div>
+<div class="stat"><strong id="most">—</strong><small>Most recorded</small></div>
+<div class="stat"><strong id="average">—</strong><small>Average intensity</small></div>
+</div>
+<div id="bars"></div>
+</section>
+<section class="card">
+<h2>My Little Memories</h2>
+<div id="history">Your entries will appear here ♡</div>
+<button class="secondary" id="download">Download summary</button>
+<button class="secondary" id="clear">Clear all entries</button>
+<p class="note">Entries are stored in this browser on this device. They are not sent to a counsellor or another person. Anyone with access to this browser profile may be able to view them.</p>
+</section>
+<section class="card">
+<h2>A gentle reminder ♡</h2>
+<p>You do not have to understand every feeling right away. Take a moment, be kind to yourself, and remember that every emotion deserves a place.</p>
+</section>
+</main>
+<footer>Made with care · E-Jar 2.0</footer>
+<script>
+const KEY="ejar20_entries";
+const emoji={Happy:"😊",Sad:"😢",Angry:"😠",Worried:"😟",Calm:"😌"};
+let entries=[];
+let selected="";
+try{entries=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(entries))entries=[]}catch(e){entries=[]}
+const $=id=>document.getElementById(id);
+function save(){
+try{localStorage.setItem(KEY,JSON.stringify(entries));return true}
+catch(e){alert("Browser storage unavailable. Entry not saved.");return false}
+}
+document.querySelectorAll(".emotion").forEach(b=>{
+b.addEventListener("click",()=>{
+selected=b.dataset.e;
+document.querySelectorAll(".emotion").forEach(x=>x.classList.remove("selected"));
+b.classList.add("selected");
+});
+});
+$("add").addEventListener("click",()=>{
+if(!selected){alert("Please choose an emotion first.");return}
+const item={emotion:selected,intensity:+$("intensity").value,reflection:$("reflection").value.trim(),date:new Date().toISOString()};
+entries.unshift(item);
+if(save()){
+$("reflection").value="";
+selected="";
+document.querySelectorAll(".emotion").forEach(x=>x.classList.remove("selected"));
+render();
+}else{entries.shift()}
+});
+function render(){
+$("jar").replaceChildren();
+entries.slice(0,35).forEach(e=>{
+const s=document.createElement("span");
+s.textContent=emoji[e.emotion]||"💗";
+$("jar").appendChild(s);
+});
+$("jarCount").textContent=entries.length?entries.length+" little feelings collected ♡":"Your jar is waiting for its first feeling ♡";
+$("total").textContent=entries.length;
+const counts={Happy:0,Sad:0,Angry:0,Worried:0,Calm:0};
+entries.forEach(e=>{if(counts[e.emotion]!==undefined)counts[e.emotion]++});
+const names=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+$("most").textContent=entries.length?emoji[names[0]]:"—";
+const avg=entries.length?entries.reduce((s,e)=>s+(+e.intensity||0),0)/entries.length:0;
+$("average").textContent=entries.length?avg.toFixed(1)+"/5":"—";
+$("bars").replaceChildren();
+Object.keys(counts).forEach(n=>{
+const row=document.createElement("p");
+row.textContent=emoji[n]+" "+n+" — "+counts[n];
+$("bars").appendChild(row);
+});
+$("history").replaceChildren();
+if(!entries.length){$("history").textContent="Your entries will appear here ♡";return}
+entries.slice(0,20).forEach(e=>{
+const div=document.createElement("div");div.className="entry";
+const small=document.createElement("small");
+small.textContent=emoji[e.emotion]+" "+e.emotion+" · "+e.intensity+"/5 · "+new Date(e.date).toLocaleString();
+const p=document.createElement("p");p.textContent=e.reflection||"No written reflection.";
+div.append(small,p);$("history").appendChild(div);
+});
+}
+$("download").addEventListener("click",()=>{
+if(!entries.length){alert("No entries to download yet.");return}
+const text=["E-Jar 2.0 — My Emotion Summary","Personal copy","",...entries.map(e=>e.emotion+" | "+e.intensity+"/5\n"+new Date(e.date).toLocaleString()+"\n"+(e.reflection||"No reflection."))].join("\n\n");
+const url=URL.createObjectURL(new Blob([text],{type:"text/plain"}));
+const a=document.createElement("a");a.href=url;a.download="my-ejar-summary.txt";a.click();URL.revokeObjectURL(url);
+});
+$("clear").addEventListener("click",()=>{
+if(confirm("Clear all entries? This cannot be undone.")){entries=[];save();render()}
+});
+render();
+</script>
+</body>
+</html>
